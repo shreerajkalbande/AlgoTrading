@@ -1,0 +1,7 @@
+# Ignore API keys and environment stuff
+service_account.json
+__pycache__/
+*.pyc
+.env
+.DS_Store
+*.ipynb_checkpoints
