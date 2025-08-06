@@ -67,7 +67,8 @@ conda activate trading_env
 pip install -r requirements.txt
 ```
 ### 2. Run
-Create these 2 files first for Successful Run
+# Create these 2 files first for Successful Run
+
 service_account.json -
     This file contains the OAuth2 credentials required to authenticate your app with Google Sheets and Google Drive APIs. It’s automatically         generated when you create a Google Service Account in Google Cloud Console.
     Create service_account.json that links the Google Sheets to this as well as config.yaml for linking telegram to this 
