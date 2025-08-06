@@ -13,18 +13,6 @@ This is a fully automated Python-based **algorithmic trading prototype** that:
 - 📲 Sends real-time **Telegram alerts** for trade signals and summaries
 - 🔄 Is modular, reproducible, and extensible for future development
 
-## Folder Structure
-Trading_Prj/
-│
-├── data/ # Contains CSV files for NIFTY 50 stocks
-├── data_ingest.py # Fetches stock data and saves to /data
-├── strategy.py # RSI + DMA-based trading logic
-├── sheet_logger.py # Logs trades and performance to Google Sheets
-├── ml_model.py # Predicts next-day movement using ML
-├── run_all.py # Runs full pipeline + sends Telegram alerts
-├── service_account.json # Google Sheets API credentials
-├── README.md # You are here
-
 ## Features & Modules
 
 ### 1. Data Ingestion
@@ -35,7 +23,7 @@ Trading_Prj/
 
 ### 2. Trading Strategy
 
-> Rule-Based Logic:
+Rule-Based Logic:
 - Buy when RSI < 30
 - Confirm if 20-day DMA > 50-day DMA (bullish trend)
 - Sell when RSI > 70 or price rises 3%
@@ -48,7 +36,7 @@ Trading_Prj/
 
 ### 4. ML Automation
 
-> Predicts next-day movement (Up/Down) using:
+Predicts next-day movement (Up/Down) using:
 - RSI, MACD, On-Balance Volume, VWAP, Volume stats, Price return
 - Models:
   - Logistic Regression (balanced)
