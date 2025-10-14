@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 from ta.momentum import RSIIndicator, StochasticOscillator
 from ta.trend import MACD, EMAIndicator, ADXIndicator
-from ta.volume import OnBalanceVolumeIndicator, VolumeWeightedAveragePrice, VolumeSMAIndicator
+from ta.volume import OnBalanceVolumeIndicator, VolumeWeightedAveragePrice
 from ta.volatility import BollingerBands, AverageTrueRange
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
@@ -38,65 +38,108 @@ from config.settings import DATA_DIR, MODELS_DIR, ML_CONFIG
 
 warnings.filterwarnings("ignore")
 
-# Enhanced feature set for quantitative analysis
+# Professional quantitative feature set
 FEATURES = [
     # Momentum indicators
-    "RSI", "MACD", "MACD_Signal", "Stoch_K", "Stoch_D", "ADX",
-    # Trend indicators  
-    "EMA_12", "EMA_26", "BB_Upper", "BB_Lower", "BB_Width",
-    # Volume indicators
-    "OBV", "VWAP", "Vol_SMA", "Vol_Ratio", "Vol_Spike",
+    "RSI", "Stoch_K", "Stoch_D", "CCI", "ROC_10", "ROC_20",
+    # Trend indicators
+    "ADX", "EMA_12", "EMA_26", "SMA_20", "SMA_50", "Hull_MA",
+    # Volatility indicators
+    "ATR", "BB_Upper", "BB_Lower", "BB_Width", "DC_Upper", "DC_Lower",
+    # Volume/Flow indicators
+    "VWAP", "OBV", "CMF", "Vol_Ratio", "Price_Volume_Trend",
+    # Statistical/Mean reversion
+    "Z_Score_20", "Price_Zscore", "Volume_Zscore", "Return_Zscore",
     # Price action
-    "Return_1d", "Return_5d", "Return_20d", "ATR", "Price_Position",
-    # Market microstructure
-    "Spread", "Volatility_20d", "Skewness_20d", "Kurtosis_20d"
+    "Return_1d", "Return_5d", "Volatility_20d", "Price_Position"
 ]
 
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     """Engineer comprehensive technical and quantitative features."""
     # Momentum indicators
     df['RSI'] = RSIIndicator(df['Close'], window=14).rsi()
-    macd = MACD(df['Close'], window_slow=26, window_fast=12, window_sign=9)
-    df['MACD'] = macd.macd()
-    df['MACD_Signal'] = macd.macd_signal()
     
     stoch = StochasticOscillator(df['High'], df['Low'], df['Close'])
     df['Stoch_K'] = stoch.stoch()
     df['Stoch_D'] = stoch.stoch_signal()
+    
+    # CCI (Commodity Channel Index)
+    typical_price = (df['High'] + df['Low'] + df['Close']) / 3
+    sma_tp = typical_price.rolling(20).mean()
+    mad = typical_price.rolling(20).apply(lambda x: np.mean(np.abs(x - x.mean())))
+    df['CCI'] = (typical_price - sma_tp) / (0.015 * mad)
+    
+    # Rate of Change
+    df['ROC_10'] = df['Close'].pct_change(10) * 100
+    df['ROC_20'] = df['Close'].pct_change(20) * 100
+    
+    # ADX for trend strength
     df['ADX'] = ADXIndicator(df['High'], df['Low'], df['Close']).adx()
     
     # Trend indicators
     df['EMA_12'] = EMAIndicator(df['Close'], window=12).ema_indicator()
     df['EMA_26'] = EMAIndicator(df['Close'], window=26).ema_indicator()
+    df['SMA_20'] = df['Close'].rolling(20).mean()
+    df['SMA_50'] = df['Close'].rolling(50).mean()
+    
+    # Hull Moving Average
+    wma_half = df['Close'].rolling(9).apply(lambda x: np.average(x, weights=np.arange(1, len(x)+1)))
+    wma_full = df['Close'].rolling(18).apply(lambda x: np.average(x, weights=np.arange(1, len(x)+1)))
+    hull_raw = 2 * wma_half - wma_full
+    df['Hull_MA'] = hull_raw.rolling(4).apply(lambda x: np.average(x, weights=np.arange(1, len(x)+1)))
+    
+    # Volatility indicators
+    df['ATR'] = AverageTrueRange(df['High'], df['Low'], df['Close']).average_true_range()
     
     bb = BollingerBands(df['Close'])
     df['BB_Upper'] = bb.bollinger_hband()
     df['BB_Lower'] = bb.bollinger_lband()
     df['BB_Width'] = (df['BB_Upper'] - df['BB_Lower']) / df['Close']
     
-    # Volume indicators
+    # Donchian Channels
+    df['DC_Upper'] = df['High'].rolling(20).max()
+    df['DC_Lower'] = df['Low'].rolling(20).min()
+    
+    # Volume/Flow indicators
     df['OBV'] = OnBalanceVolumeIndicator(df['Close'], df['Volume']).on_balance_volume()
     df['VWAP'] = VolumeWeightedAveragePrice(
         df['High'], df['Low'], df['Close'], df['Volume'], window=20
     ).volume_weighted_average_price()
-    df['Vol_SMA'] = VolumeSMAIndicator(df['Volume'], window=20).volume_sma()
-    df['Vol_Ratio'] = df['Volume'] / df['Vol_SMA']
-    df['Vol_Spike'] = (df['Vol_Ratio'] > 2).astype(int)
+    
+    # Chaikin Money Flow
+    mf_multiplier = ((df['Close'] - df['Low']) - (df['High'] - df['Close'])) / (df['High'] - df['Low'])
+    mf_volume = mf_multiplier * df['Volume']
+    df['CMF'] = mf_volume.rolling(20).sum() / df['Volume'].rolling(20).sum()
+    
+    # Volume analysis
+    vol_sma = df['Volume'].rolling(20).mean()
+    df['Vol_Ratio'] = df['Volume'] / vol_sma
+    
+    # Price Volume Trend
+    df['Price_Volume_Trend'] = (df['Close'].pct_change() * df['Volume']).cumsum()
+    
+    # Statistical/Mean reversion indicators
+    sma_20 = df['Close'].rolling(20).mean()
+    std_20 = df['Close'].rolling(20).std()
+    df['Z_Score_20'] = (df['Close'] - sma_20) / std_20
+    
+    # Price Z-score (mean reversion signal)
+    df['Price_Zscore'] = (df['Close'] - df['Close'].rolling(50).mean()) / df['Close'].rolling(50).std()
+    
+    # Volume Z-score
+    df['Volume_Zscore'] = (df['Volume'] - df['Volume'].rolling(20).mean()) / df['Volume'].rolling(20).std()
+    
+    # Return Z-score
+    returns = df['Close'].pct_change()
+    df['Return_Zscore'] = (returns - returns.rolling(20).mean()) / returns.rolling(20).std()
     
     # Price action features
-    df['Return_1d'] = df['Close'].pct_change()
+    df['Return_1d'] = returns
     df['Return_5d'] = df['Close'].pct_change(5)
-    df['Return_20d'] = df['Close'].pct_change(20)
-    df['ATR'] = AverageTrueRange(df['High'], df['Low'], df['Close']).average_true_range()
+    df['Volatility_20d'] = returns.rolling(20).std() * np.sqrt(252)
     df['Price_Position'] = (df['Close'] - df['Close'].rolling(20).min()) / (
         df['Close'].rolling(20).max() - df['Close'].rolling(20).min()
     )
-    
-    # Market microstructure
-    df['Spread'] = (df['High'] - df['Low']) / df['Close']
-    df['Volatility_20d'] = df['Return_1d'].rolling(20).std() * np.sqrt(252)
-    df['Skewness_20d'] = df['Return_1d'].rolling(20).skew()
-    df['Kurtosis_20d'] = df['Return_1d'].rolling(20).kurt()
     
     return df
 
@@ -290,7 +333,8 @@ def main():
     X = X_all[selected_features]
     
     # Time-aware train-test split
-    split_date = data.index.quantile(0.8)
+    split_idx = int(len(data) * 0.8)
+    split_date = data.index[split_idx]
     train_mask = data.index <= split_date
     
     X_train, X_test = X[train_mask], X[~train_mask]

@@ -8,9 +8,10 @@ risk management and position sizing.
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Tuple
-from ta.momentum import RSIIndicator
-from ta.trend import MACD, EMAIndicator
-from ta.volatility import AverageTrueRange
+from ta.momentum import RSIIndicator, StochasticOscillator
+from ta.trend import ADXIndicator
+from ta.volatility import AverageTrueRange, BollingerBands
+from ta.volume import VolumeWeightedAveragePrice
 
 from config.settings import TRADING_CONFIG, STRATEGY_CONFIG, RISK_CONFIG
 from strategy.base import BaseStrategy, Trade, Position
@@ -24,65 +25,102 @@ class QuantMomentumStrategy(BaseStrategy):
         self.transaction_cost = TRADING_CONFIG['transaction_cost']
         
     def compute_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Compute technical indicators for strategy."""
+        """Compute advanced technical indicators for strategy."""
         # Momentum indicators
         df['RSI'] = RSIIndicator(df['Close'], window=14).rsi()
+        
+        stoch = StochasticOscillator(df['High'], df['Low'], df['Close'])
+        df['Stoch_K'] = stoch.stoch()
+        
+        # CCI for momentum confirmation
+        typical_price = (df['High'] + df['Low'] + df['Close']) / 3
+        sma_tp = typical_price.rolling(20).mean()
+        mad = typical_price.rolling(20).apply(lambda x: np.mean(np.abs(x - x.mean())))
+        df['CCI'] = (typical_price - sma_tp) / (0.015 * mad)
         
         # Trend indicators
         df['SMA20'] = df['Close'].rolling(window=STRATEGY_CONFIG['sma_short']).mean()
         df['SMA50'] = df['Close'].rolling(window=STRATEGY_CONFIG['sma_long']).mean()
-        df['EMA12'] = EMAIndicator(df['Close'], window=12).ema_indicator()
-        df['EMA26'] = EMAIndicator(df['Close'], window=26).ema_indicator()
+        df['ADX'] = ADXIndicator(df['High'], df['Low'], df['Close']).adx()
         
-        # MACD
-        macd = MACD(df['Close'])
-        df['MACD'] = macd.macd()
-        df['MACD_Signal'] = macd.macd_signal()
-        df['MACD_Histogram'] = df['MACD'] - df['MACD_Signal']
-        
-        # Volatility
+        # Volatility indicators
         df['ATR'] = AverageTrueRange(df['High'], df['Low'], df['Close']).average_true_range()
-        df['Volatility'] = df['Close'].pct_change().rolling(20).std() * np.sqrt(252)
+        bb = BollingerBands(df['Close'])
+        df['BB_Upper'] = bb.bollinger_hband()
+        df['BB_Lower'] = bb.bollinger_lband()
         
-        # Price momentum
+        # Volume indicators
+        df['VWAP'] = VolumeWeightedAveragePrice(
+            df['High'], df['Low'], df['Close'], df['Volume'], window=20
+        ).volume_weighted_average_price()
+        
+        # Statistical indicators
+        sma_20 = df['Close'].rolling(20).mean()
+        std_20 = df['Close'].rolling(20).std()
+        df['Z_Score'] = (df['Close'] - sma_20) / std_20
+        
+        df['Volatility'] = df['Close'].pct_change().rolling(20).std() * np.sqrt(252)
         df['Return_5d'] = df['Close'].pct_change(5)
-        df['Return_20d'] = df['Close'].pct_change(20)
         
         return df
     
     def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Generate trading signals based on multiple factors."""
+        """Generate trading signals using advanced multi-factor approach."""
         df = self.compute_indicators(df)
         
         # Initialize signals
         df['Signal'] = 0.0
         df['Signal_Strength'] = 0.0
         
-        # Mean reversion component (RSI)
+        # Multi-factor signal components
+        
+        # 1. Mean reversion signals
         rsi_oversold = df['RSI'] < STRATEGY_CONFIG['rsi_oversold']
         rsi_overbought = df['RSI'] > STRATEGY_CONFIG['rsi_overbought']
+        bb_oversold = df['Close'] < df['BB_Lower']
+        bb_overbought = df['Close'] > df['BB_Upper']
+        zscore_oversold = df['Z_Score'] < -2
+        zscore_overbought = df['Z_Score'] > 2
         
-        # Trend following component
-        trend_bullish = df['SMA20'] > df['SMA50']
-        trend_bearish = df['SMA20'] < df['SMA50']
+        # 2. Trend following signals
+        trend_bullish = (df['SMA20'] > df['SMA50']) & (df['ADX'] > 25)
+        trend_bearish = (df['SMA20'] < df['SMA50']) & (df['ADX'] > 25)
         
-        # Momentum component
-        momentum_positive = (df['MACD'] > df['MACD_Signal']) & (df['MACD_Histogram'] > 0)
-        momentum_negative = (df['MACD'] < df['MACD_Signal']) & (df['MACD_Histogram'] < 0)
+        # 3. Momentum confirmation
+        stoch_oversold = df['Stoch_K'] < 20
+        stoch_overbought = df['Stoch_K'] > 80
+        cci_oversold = df['CCI'] < -100
+        cci_overbought = df['CCI'] > 100
         
-        # Combined signals
-        long_signal = rsi_oversold & trend_bullish & momentum_positive
-        short_signal = rsi_overbought & trend_bearish & momentum_negative
+        # 4. Volume confirmation
+        volume_support = df['Close'] > df['VWAP']
         
-        # Signal strength based on multiple factors
+        # Combined long signals (mean reversion + trend + momentum)
+        long_signal = (
+            (rsi_oversold | bb_oversold | zscore_oversold) &
+            trend_bullish &
+            (stoch_oversold | cci_oversold) &
+            volume_support
+        )
+        
+        # Combined short signals
+        short_signal = (
+            (rsi_overbought | bb_overbought | zscore_overbought) &
+            trend_bearish &
+            (stoch_overbought | cci_overbought) &
+            ~volume_support
+        )
+        
+        # Assign signals
         df.loc[long_signal, 'Signal'] = 1.0
         df.loc[short_signal, 'Signal'] = -1.0
         
-        # Calculate signal strength (0-1)
+        # Calculate signal strength using multiple factors
         df['Signal_Strength'] = abs(df['Signal']) * (
-            0.3 * (100 - df['RSI']) / 100 +  # RSI component
-            0.3 * abs(df['MACD_Histogram']) / df['ATR'] +  # MACD strength
-            0.4 * abs(df['Return_5d'])  # Recent momentum
+            0.25 * abs(df['RSI'] - 50) / 50 +  # RSI deviation from neutral
+            0.25 * abs(df['Z_Score']) / 3 +    # Z-score strength
+            0.25 * df['ADX'] / 100 +           # Trend strength
+            0.25 * abs(df['Return_5d'])        # Recent momentum
         )
         
         return df
@@ -111,72 +149,79 @@ class QuantMomentumStrategy(BaseStrategy):
         return shares
 
 def backtest_strategy(df: pd.DataFrame, strategy: QuantMomentumStrategy = None) -> Tuple[List[Dict], Dict[str, float]]:
-    """Backtest the quantitative strategy with proper risk management."""
+    """Backtest the quantitative strategy with simplified logic."""
     if strategy is None:
         strategy = QuantMomentumStrategy()
     
     df = strategy.generate_signals(df)
     trade_log = []
     
+    cash = strategy.initial_capital
+    position = 0
+    entry_price = 0
+    equity_curve = []
+    
     for date, row in df.iterrows():
-        current_prices = {'symbol': row['Close']}
-        
-        # Update portfolio value
-        portfolio_value = strategy.update_portfolio_value(current_prices)
-        
-        # Check for exit signals on existing positions
-        positions_to_close = []
-        for symbol, pos in strategy.positions.items():
-            # Exit conditions
-            stop_loss_hit = (row['Close'] < pos.avg_price * (1 - RISK_CONFIG['stop_loss']))
-            take_profit_hit = (row['Close'] > pos.avg_price * (1 + RISK_CONFIG['take_profit']))
-            rsi_exit = (pos.quantity > 0 and row['RSI'] > STRATEGY_CONFIG['rsi_overbought']) or \
-                      (pos.quantity < 0 and row['RSI'] < STRATEGY_CONFIG['rsi_oversold'])
-            trend_exit = (pos.quantity > 0 and row['SMA20'] < row['SMA50']) or \
-                        (pos.quantity < 0 and row['SMA20'] > row['SMA50'])
+        # Exit logic
+        if position > 0:
+            stop_loss_hit = row['Close'] < entry_price * (1 - RISK_CONFIG['stop_loss'])
+            take_profit_hit = row['Close'] > entry_price * (1 + RISK_CONFIG['take_profit'])
+            rsi_exit = row['RSI'] > STRATEGY_CONFIG['rsi_overbought']
+            trend_exit = row['SMA20'] < row['SMA50']
             
             if stop_loss_hit or take_profit_hit or rsi_exit or trend_exit:
-                positions_to_close.append(symbol)
-        
-        # Close positions
-        for symbol in positions_to_close:
-            pos = strategy.positions[symbol]
-            # Find corresponding open trade and close it
-            for trade in reversed(strategy.trades):
-                if trade.symbol == symbol and trade.is_open:
-                    trade.close_trade(date, row['Close'])
-                    trade_log.append({
-                        'Date': date,
-                        'Action': 'SELL' if trade.side == 'long' else 'COVER',
-                        'Price': row['Close'],
-                        'Shares': abs(trade.quantity),
-                        'P&L': trade.pnl
-                    })
-                    break
-            
-            # Update cash
-            strategy.cash += pos.quantity * row['Close']
-            del strategy.positions[symbol]
-        
-        # Generate new entry signals
-        if abs(row['Signal']) > 0.1:
-            trade = strategy.execute_trade(
-                date=date,
-                symbol='symbol',
-                signal=row['Signal'],
-                price=row['Close'],
-                volatility=row.get('Volatility', 0.2)
-            )
-            
-            if trade:
+                proceeds = position * row['Close']
+                pnl = position * (row['Close'] - entry_price)
+                cash += proceeds
                 trade_log.append({
                     'Date': date,
-                    'Action': 'BUY' if trade.side == 'long' else 'SHORT',
-                    'Price': trade.entry_price,
-                    'Shares': trade.quantity
+                    'Action': 'SELL',
+                    'Price': row['Close'],
+                    'Shares': position,
+                    'P&L': pnl
                 })
+                position = 0
+        
+        # Entry logic
+        if position == 0 and row['Signal'] > 0.5:
+            shares = int((cash * strategy.max_position_size) / row['Close'])
+            if shares > 0:
+                cost = shares * row['Close']
+                cash -= cost
+                position = shares
+                entry_price = row['Close']
+                trade_log.append({
+                    'Date': date,
+                    'Action': 'BUY',
+                    'Price': row['Close'],
+                    'Shares': shares
+                })
+        
+        # Track equity
+        portfolio_value = cash + (position * row['Close'])
+        equity_curve.append(portfolio_value)
     
-    # Calculate performance metrics
-    performance = strategy.get_performance_metrics()
+    # Calculate performance
+    returns = pd.Series(equity_curve).pct_change().dropna()
+    total_return = (equity_curve[-1] - strategy.initial_capital) / strategy.initial_capital
+    volatility = returns.std() * np.sqrt(252)
+    sharpe = (returns.mean() * 252) / volatility if volatility > 0 else 0
+    
+    cumulative = pd.Series(equity_curve)
+    peak = cumulative.expanding().max()
+    drawdown = (cumulative - peak) / peak
+    max_drawdown = drawdown.min()
+    
+    completed_trades = [t for t in trade_log if 'P&L' in t]
+    win_rate = len([t for t in completed_trades if t['P&L'] > 0]) / len(completed_trades) if completed_trades else 0
+    
+    performance = {
+        'total_return': total_return,
+        'sharpe_ratio': sharpe,
+        'max_drawdown': max_drawdown,
+        'win_rate': win_rate,
+        'total_trades': len(completed_trades),
+        'final_portfolio_value': equity_curve[-1] if equity_curve else strategy.initial_capital
+    }
     
     return trade_log, performance

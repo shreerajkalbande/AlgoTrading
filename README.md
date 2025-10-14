@@ -1,17 +1,49 @@
-# 📈 Quantitative Trading System
+# 📈 Advanced Quantitative Trading System
 
-A professional algorithmic trading system with multi-factor strategies, machine learning, and comprehensive risk management.
+A professional algorithmic trading system implementing multi-factor strategies with advanced technical indicators, machine learning, and institutional-grade risk management.
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## 🎯 Features
+## 🎯 Advanced Features
 
-- **Multi-Factor Strategy**: RSI, MACD, Moving Averages with signal strength weighting
-- **Machine Learning**: Ensemble models (Random Forest, Gradient Boosting, Logistic Regression)
-- **Risk Management**: Volatility-adjusted position sizing, stop-loss, take-profit
-- **Performance Analytics**: Sharpe ratio, drawdown analysis, comprehensive metrics
-- **Real-time Integration**: Google Sheets logging, Telegram alerts
+- **Multi-Factor Strategy**: 20+ professional indicators across momentum, trend, volatility, and volume
+- **Statistical Analysis**: Z-score mean reversion, Hull MA, Donchian Channels
+- **Machine Learning**: Ensemble models with advanced feature engineering
+- **Risk Management**: Volatility-adjusted position sizing, drawdown controls
+- **Performance Analytics**: Institutional-grade metrics and reporting
+
+## 🔬 Technical Indicators
+
+### Momentum Indicators
+- **RSI** (Relative Strength Index)
+- **Stochastic Oscillator** (K% and D%)
+- **CCI** (Commodity Channel Index)
+- **ROC** (Rate of Change - 10d, 20d)
+
+### Trend Analysis
+- **ADX** (Average Directional Index) for trend strength
+- **EMA/SMA Crossovers** (12, 26, 20, 50 periods)
+- **Hull Moving Average** for reduced lag
+- **Trend confirmation** with directional filters
+
+### Volatility Measures
+- **ATR** (Average True Range)
+- **Bollinger Bands** with dynamic width
+- **Donchian Channels** (20-period)
+- **Volatility-adjusted position sizing**
+
+### Volume/Flow Analysis
+- **VWAP** (Volume Weighted Average Price)
+- **OBV** (On-Balance Volume)
+- **CMF** (Chaikin Money Flow)
+- **Price-Volume Trend** analysis
+
+### Statistical/Mean Reversion
+- **Z-Score** analysis (20-period)
+- **Price Z-Score** for mean reversion signals
+- **Volume Z-Score** for anomaly detection
+- **Return Z-Score** for momentum analysis
 
 ## 🚀 Quick Start
 
@@ -29,112 +61,137 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## 📊 Architecture
+## 📊 Strategy Logic
 
-```
-AlgoTrading/
-├── config/           # Settings and parameters
-├── strategy/         # Trading strategies
-├── utils/           # Performance analysis
-├── data/            # Market data
-├── models/          # ML models
-├── main.py          # Main execution
-└── ml_model.py      # ML pipeline
-```
-
-## 🔧 Configuration
-
-### Basic Setup
-Edit `config/settings.py`:
+### Advanced Signal Generation
 ```python
-STOCK_UNIVERSE = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS"]
-TRADING_CONFIG = {
-    "initial_capital": 1_000_000,
-    "max_position_size": 0.2,
-    "stop_loss": 0.05,
-    "take_profit": 0.10
-}
+# Multi-factor long signal
+long_signal = (
+    (RSI < 30 | BB_oversold | Z_Score < -2) &    # Mean reversion
+    (SMA20 > SMA50 & ADX > 25) &                 # Trend confirmation
+    (Stoch_K < 20 | CCI < -100) &                # Momentum confirmation
+    (Close > VWAP)                               # Volume support
+)
 ```
 
-### Optional Integrations
+### Risk Management Framework
+- **Position Sizing**: Volatility-adjusted Kelly criterion
+- **Stop Loss**: 5% with ATR-based trailing stops
+- **Take Profit**: 10% with Bollinger Band exits
+- **Drawdown Control**: 15% maximum portfolio drawdown
+- **Diversification**: 20% maximum per position
 
-**Telegram Alerts** - Create `config.yaml`:
-```yaml
-telegram:
-  token: "YOUR_BOT_TOKEN"
-  chat_id: "YOUR_CHAT_ID"
-```
+### Machine Learning Pipeline
+- **Feature Engineering**: 25+ quantitative features
+- **Model Ensemble**: Random Forest + Gradient Boosting + Logistic Regression
+- **Validation**: Time series cross-validation
+- **Feature Selection**: Statistical significance testing
 
-**Google Sheets** - Add `service_account.json` for trade logging
-
-## 📈 Strategy Logic
-
-### Entry Signals
-- **Long**: RSI < 30 + SMA20 > SMA50 + MACD bullish
-- **Short**: RSI > 70 + SMA20 < SMA50 + MACD bearish
-
-### Risk Management
-- **Position Size**: 20% max per position, volatility-adjusted
-- **Stop Loss**: 5% maximum loss
-- **Take Profit**: 10% profit target
-
-### ML Features
-- 20+ technical indicators
-- Time series cross-validation
-- Feature selection with statistical tests
-- Model ensemble with performance tracking
-
-## 📊 Performance Metrics
+## 📈 Performance Metrics
 
 | Metric | Target | Description |
 |--------|--------|-------------|
-| Sharpe Ratio | > 1.0 | Risk-adjusted returns |
-| Max Drawdown | < 15% | Largest decline |
-| Win Rate | > 55% | Profitable trades % |
+| Sharpe Ratio | > 1.2 | Risk-adjusted returns |
+| Sortino Ratio | > 1.5 | Downside risk adjustment |
+| Max Drawdown | < 12% | Peak-to-trough decline |
+| Win Rate | > 58% | Profitable trades % |
+| Profit Factor | > 1.8 | Gross profit/loss ratio |
 
 ## 🛠️ Usage Examples
 
-### Run Complete System
+### Complete System
 ```bash
 python main.py
 ```
 
 ### Individual Components
 ```bash
-python ml_model.py      # ML pipeline only
-python data_ingest.py   # Fetch data only
+python ml_model.py          # Advanced ML pipeline
+python strategy.py          # Multi-factor strategy
+python data_ingest.py       # Market data fetching
 ```
 
-### Custom Strategy
+### Custom Strategy Implementation
 ```python
 from strategy.quant_strategy import QuantMomentumStrategy
 
-strategy = QuantMomentumStrategy(initial_capital=500000)
+# Initialize with custom parameters
+strategy = QuantMomentumStrategy(initial_capital=1_000_000)
+
+# Run backtest with advanced indicators
 trades, performance = backtest_strategy(data, strategy)
+
+# Analyze results
+print(f"Sharpe Ratio: {performance['sharpe_ratio']:.3f}")
+print(f"Max Drawdown: {performance['max_drawdown']:.2%}")
 ```
+
+## 🔧 Configuration
+
+### Strategy Parameters
+```python
+STRATEGY_CONFIG = {
+    "rsi_oversold": 30,
+    "rsi_overbought": 70,
+    "sma_short": 20,
+    "sma_long": 50,
+    "adx_threshold": 25,        # Trend strength filter
+    "bb_periods": 20,           # Bollinger Band periods
+    "atr_multiplier": 2.0,      # ATR-based stops
+}
+```
+
+### Risk Management
+```python
+RISK_CONFIG = {
+    "max_position_size": 0.20,  # 20% per position
+    "stop_loss": 0.05,          # 5% stop loss
+    "take_profit": 0.10,        # 10% take profit
+    "max_drawdown": 0.12,       # 12% max drawdown
+    "volatility_target": 0.15,  # 15% annual volatility
+}
+```
+
+## 📊 Advanced Analytics
+
+The system provides institutional-grade performance analysis:
+
+- **Risk Metrics**: VaR, CVaR, Sortino ratio, Calmar ratio
+- **Attribution Analysis**: Factor contribution to returns
+- **Regime Detection**: Market condition identification
+- **Correlation Analysis**: Cross-asset relationships
+- **Drawdown Analysis**: Duration and recovery metrics
 
 ## 📋 Requirements
 
-- Python 3.8+
-- pandas, numpy, scikit-learn
-- yfinance, ta (technical analysis)
-- matplotlib, seaborn (visualization)
+```
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+ta>=0.10.2
+yfinance>=0.2.18
+matplotlib>=3.7.0
+seaborn>=0.12.0
+```
 
-## ⚠️ Disclaimer
+## ⚠️ Risk Disclaimer
 
-**Educational purposes only.** Past performance doesn't guarantee future results. Always:
-- Test with paper trading first
-- Start with small positions
-- Monitor risk continuously
-- Understand strategies before deployment
+This system is designed for educational and research purposes. Financial markets involve substantial risk of loss. Always:
+
+- **Paper trade** extensively before live deployment
+- **Start small** with real capital
+- **Monitor performance** continuously
+- **Understand** all strategies before implementation
+- **Comply** with local financial regulations
 
 ## 🤝 Contributing
 
+We welcome contributions to enhance the system:
+
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/new-strategy`)
-3. Commit changes (`git commit -am 'Add new strategy'`)
-4. Push to branch (`git push origin feature/new-strategy`)
-5. Create Pull Request
+2. Create feature branch (`git checkout -b feature/advanced-indicator`)
+3. Implement with proper testing
+4. Submit pull request with detailed description
 
 ## 📄 License
 
@@ -143,5 +200,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ---
 
 **Author**: Shreeraj Kalbande  
-**Version**: 2.0  
+**Version**: 2.1 - Advanced Quantitative Edition  
 **Last Updated**: 2024
+
+*Built with institutional-grade quantitative finance principles*
