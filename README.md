@@ -201,6 +201,5 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Author**: Shreeraj Kalbande  
 **Version**: 2.1 - Advanced Quantitative Edition  
-**Last Updated**: 2024
+**Last Updated**: 2025
 
-*Built with institutional-grade quantitative finance principles*
