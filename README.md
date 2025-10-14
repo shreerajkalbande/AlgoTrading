@@ -1,87 +1,147 @@
-###  Algo-Trading System with ML, Automation, and Google Sheets Integration
+# 📈 Quantitative Trading System
 
-I made this automated pipeline for backtesting the simple trading strategy and analysis of ML models only.
-Created by: Shreeraj Kalbande
+A professional algorithmic trading system with multi-factor strategies, machine learning, and comprehensive risk management.
 
----
-This is a fully automated Python-based **algorithmic trading prototype** that:
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-- 📊 Fetches stock market data using `yfinance`
-- 📉 Implements a rule-based trading strategy (RSI + DMA crossover)
-- 🧠 Includes machine learning models to predict next-day price movements
-- 📤 Logs trades and performance to **Google Sheets** automatically
-- 📲 Sends real-time **Telegram alerts** for trade signals and summaries
-- 🔄 Is modular, reproducible, and extensible for future development
+## 🎯 Features
 
-## Features & Modules
+- **Multi-Factor Strategy**: RSI, MACD, Moving Averages with signal strength weighting
+- **Machine Learning**: Ensemble models (Random Forest, Gradient Boosting, Logistic Regression)
+- **Risk Management**: Volatility-adjusted position sizing, stop-loss, take-profit
+- **Performance Analytics**: Sharpe ratio, drawdown analysis, comprehensive metrics
+- **Real-time Integration**: Google Sheets logging, Telegram alerts
 
-### 1. Data Ingestion
-
-- Uses "yfinance" to fetch **daily** price data for:
-  - RELIANCE.NS`, `TCS.NS`, `HDFCBANK.NS`
-- Stores data in `/data` folder as CSVs
-
-### 2. Trading Strategy
-
-Rule-Based Logic:
-- Buy when RSI < 30
-- Confirm if 20-day DMA > 50-day DMA (bullish trend)
-- Sell when RSI > 70 or price rises 3%
-
-### 3. Backtesting
-
-- Runs strategy for each stock
-- Simulates trade entry/exit
-- Calculates net profit/loss (P&L) over last 6 months
-
-### 4. ML Automation
-
-Predicts next-day movement (Up/Down) using:
-- RSI, MACD, On-Balance Volume, VWAP, Volume stats, Price return
-- Models:
-  - Logistic Regression (balanced)
-  - Decision Tree + GridSearch hyperparameter tuning
-- Reports accuracy, F1, recall, precision
-
-### 5. Google Sheets Integration
-
-- Automatically writes:
-  - Trade log
-  - Summary P&L (win/loss ratio, total profit)
-- Uses Google Sheets API with service account credentials
-
-### 6. Telegram Alerts
-
-- Sends a Telegram message after full pipeline run
-  - Reports net P&L and stocks traded
-
----
-
-## Setup Instructions
-
-### 1. Environment Setup
+## 🚀 Quick Start
 
 ```bash
-conda create -n trading_env python=3.11
-conda activate trading_env
+# Clone repository
+git clone https://github.com/yourusername/AlgoTrading.git
+cd AlgoTrading
+
+# Setup environment
+python -m venv trading_env
+source trading_env/bin/activate  # Linux/Mac
 pip install -r requirements.txt
+
+# Run system
+python main.py
 ```
-### 2. Run
-#### Create these 2 files first for Successful Run
 
-service_account.json -
-    This file contains the OAuth2 credentials required to authenticate your app with Google Sheets and Google Drive APIs. It’s automatically         generated when you create a Google Service Account in Google Cloud Console.
-    Create service_account.json that links the Google Sheets to this as well as config.yaml for linking telegram to this 
-  - Purpose:
-    Authorizes the script to read/write Google Sheets on your behalf.
-    Allows automated logging of trades, profit/loss summaries, and strategy outputs.
+## 📊 Architecture
 
-config.yaml -
-    This YAML file contains your Telegram Bot API token and Chat ID for pushing trade alerts or error notifications via Telegram.
-  - Purpose:
-    Authenticates requests to the Telegram Bot API
-    Sends real-time updates about your trading strategy execution (e.g., Net P&L) directly to your Telegram inbox
+```
+AlgoTrading/
+├── config/           # Settings and parameters
+├── strategy/         # Trading strategies
+├── utils/           # Performance analysis
+├── data/            # Market data
+├── models/          # ML models
+├── main.py          # Main execution
+└── ml_model.py      # ML pipeline
+```
 
+## 🔧 Configuration
+
+### Basic Setup
+Edit `config/settings.py`:
+```python
+STOCK_UNIVERSE = ["RELIANCE.NS", "TCS.NS", "HDFCBANK.NS"]
+TRADING_CONFIG = {
+    "initial_capital": 1_000_000,
+    "max_position_size": 0.2,
+    "stop_loss": 0.05,
+    "take_profit": 0.10
+}
+```
+
+### Optional Integrations
+
+**Telegram Alerts** - Create `config.yaml`:
+```yaml
+telegram:
+  token: "YOUR_BOT_TOKEN"
+  chat_id: "YOUR_CHAT_ID"
+```
+
+**Google Sheets** - Add `service_account.json` for trade logging
+
+## 📈 Strategy Logic
+
+### Entry Signals
+- **Long**: RSI < 30 + SMA20 > SMA50 + MACD bullish
+- **Short**: RSI > 70 + SMA20 < SMA50 + MACD bearish
+
+### Risk Management
+- **Position Size**: 20% max per position, volatility-adjusted
+- **Stop Loss**: 5% maximum loss
+- **Take Profit**: 10% profit target
+
+### ML Features
+- 20+ technical indicators
+- Time series cross-validation
+- Feature selection with statistical tests
+- Model ensemble with performance tracking
+
+## 📊 Performance Metrics
+
+| Metric | Target | Description |
+|--------|--------|-------------|
+| Sharpe Ratio | > 1.0 | Risk-adjusted returns |
+| Max Drawdown | < 15% | Largest decline |
+| Win Rate | > 55% | Profitable trades % |
+
+## 🛠️ Usage Examples
+
+### Run Complete System
 ```bash
-python run_all.py
+python main.py
 ```
+
+### Individual Components
+```bash
+python ml_model.py      # ML pipeline only
+python data_ingest.py   # Fetch data only
+```
+
+### Custom Strategy
+```python
+from strategy.quant_strategy import QuantMomentumStrategy
+
+strategy = QuantMomentumStrategy(initial_capital=500000)
+trades, performance = backtest_strategy(data, strategy)
+```
+
+## 📋 Requirements
+
+- Python 3.8+
+- pandas, numpy, scikit-learn
+- yfinance, ta (technical analysis)
+- matplotlib, seaborn (visualization)
+
+## ⚠️ Disclaimer
+
+**Educational purposes only.** Past performance doesn't guarantee future results. Always:
+- Test with paper trading first
+- Start with small positions
+- Monitor risk continuously
+- Understand strategies before deployment
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/new-strategy`)
+3. Commit changes (`git commit -am 'Add new strategy'`)
+4. Push to branch (`git push origin feature/new-strategy`)
+5. Create Pull Request
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+**Author**: Shreeraj Kalbande  
+**Version**: 2.0  
+**Last Updated**: 2024

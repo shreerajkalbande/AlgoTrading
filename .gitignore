@@ -1,7 +1,71 @@
-# Ignore API keys and environment stuff
-service_account.json
+# Python
 __pycache__/
-*.pyc
-.env
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+trading_env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data files
+*.csv
+*.xlsx
+*.json
+!requirements.txt
+
+# Credentials
+service_account.json
+config.yaml
+*.key
+*.pem
+
+# Logs
+logs/
+*.log
+
+# Models
+models/*.pkl
+models/*.joblib
+
+# Reports
+reports/*.png
+reports/*.pdf
+reports/*.html
+
+# OS
 .DS_Store
-*.ipynb_checkpoints
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
