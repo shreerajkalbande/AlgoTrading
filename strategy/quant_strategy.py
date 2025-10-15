@@ -25,23 +25,13 @@ class QuantMomentumStrategy(BaseStrategy):
         self.transaction_cost = TRADING_CONFIG['transaction_cost']
         
     def compute_indicators(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Compute advanced technical indicators for strategy."""
+        """Compute core technical indicators for strategy."""
         # Momentum indicators
         df['RSI'] = RSIIndicator(df['Close'], window=14).rsi()
-        
-        stoch = StochasticOscillator(df['High'], df['Low'], df['Close'])
-        df['Stoch_K'] = stoch.stoch()
-        
-        # CCI for momentum confirmation
-        typical_price = (df['High'] + df['Low'] + df['Close']) / 3
-        sma_tp = typical_price.rolling(20).mean()
-        mad = typical_price.rolling(20).apply(lambda x: np.mean(np.abs(x - x.mean())))
-        df['CCI'] = (typical_price - sma_tp) / (0.015 * mad)
         
         # Trend indicators
         df['SMA20'] = df['Close'].rolling(window=STRATEGY_CONFIG['sma_short']).mean()
         df['SMA50'] = df['Close'].rolling(window=STRATEGY_CONFIG['sma_long']).mean()
-        df['ADX'] = ADXIndicator(df['High'], df['Low'], df['Close']).adx()
         
         # Volatility indicators
         df['ATR'] = AverageTrueRange(df['High'], df['Low'], df['Close']).average_true_range()
@@ -54,74 +44,36 @@ class QuantMomentumStrategy(BaseStrategy):
             df['High'], df['Low'], df['Close'], df['Volume'], window=20
         ).volume_weighted_average_price()
         
-        # Statistical indicators
-        sma_20 = df['Close'].rolling(20).mean()
-        std_20 = df['Close'].rolling(20).std()
-        df['Z_Score'] = (df['Close'] - sma_20) / std_20
-        
         df['Volatility'] = df['Close'].pct_change().rolling(20).std() * np.sqrt(252)
-        df['Return_5d'] = df['Close'].pct_change(5)
         
         return df
     
     def generate_signals(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Generate trading signals using advanced multi-factor approach."""
+        """Generate trading signals using multi-factor approach."""
         df = self.compute_indicators(df)
         
         # Initialize signals
         df['Signal'] = 0.0
-        df['Signal_Strength'] = 0.0
         
-        # Multi-factor signal components
-        
-        # 1. Mean reversion signals
+        # Mean reversion signals
         rsi_oversold = df['RSI'] < STRATEGY_CONFIG['rsi_oversold']
         rsi_overbought = df['RSI'] > STRATEGY_CONFIG['rsi_overbought']
         bb_oversold = df['Close'] < df['BB_Lower']
         bb_overbought = df['Close'] > df['BB_Upper']
-        zscore_oversold = df['Z_Score'] < -2
-        zscore_overbought = df['Z_Score'] > 2
         
-        # 2. Trend following signals
-        trend_bullish = (df['SMA20'] > df['SMA50']) & (df['ADX'] > 25)
-        trend_bearish = (df['SMA20'] < df['SMA50']) & (df['ADX'] > 25)
+        # Trend following signals
+        trend_bullish = df['SMA20'] > df['SMA50']
+        trend_bearish = df['SMA20'] < df['SMA50']
         
-        # 3. Momentum confirmation
-        stoch_oversold = df['Stoch_K'] < 20
-        stoch_overbought = df['Stoch_K'] > 80
-        cci_oversold = df['CCI'] < -100
-        cci_overbought = df['CCI'] > 100
-        
-        # 4. Volume confirmation
+        # Volume confirmation
         volume_support = df['Close'] > df['VWAP']
         
-        # Combined long signals (mean reversion + trend + momentum)
-        long_signal = (
-            (rsi_oversold | bb_oversold | zscore_oversold) &
-            trend_bullish &
-            (stoch_oversold | cci_oversold) &
-            volume_support
-        )
+        # Combined signals
+        long_signal = (rsi_oversold | bb_oversold) & trend_bullish & volume_support
+        short_signal = (rsi_overbought | bb_overbought) & trend_bearish & ~volume_support
         
-        # Combined short signals
-        short_signal = (
-            (rsi_overbought | bb_overbought | zscore_overbought) &
-            trend_bearish &
-            (stoch_overbought | cci_overbought) &
-            ~volume_support
-        )
-        
-        # Assign signals
         df.loc[long_signal, 'Signal'] = 1.0
         df.loc[short_signal, 'Signal'] = -1.0
-        
-        # Calculate signal strength using multiple factors
-        df['Signal_Strength'] = abs(df['Signal']) * (
-            0.25 * abs(df['RSI'] - 50) / 50 +  # RSI deviation from neutral
-            0.25 * abs(df['Z_Score']) / 3 +    # Z-score strength
-            0.25 * df['ADX'] / 100 +           # Trend strength
-            0.25 * abs(df['Return_5d'])        # Recent momentum
-        )
         
         return df
     

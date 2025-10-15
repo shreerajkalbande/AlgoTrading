@@ -7,43 +7,32 @@ A professional algorithmic trading system implementing multi-factor strategies w
 
 ## 🎯 Advanced Features
 
-- **Multi-Factor Strategy**: 20+ professional indicators across momentum, trend, volatility, and volume
-- **Statistical Analysis**: Z-score mean reversion, Hull MA, Donchian Channels
-- **Machine Learning**: Ensemble models with advanced feature engineering
-- **Risk Management**: Volatility-adjusted position sizing, drawdown controls
-- **Performance Analytics**: Institutional-grade metrics and reporting
+- **Multi-Factor Strategy**: Core technical indicators (RSI, MACD, Bollinger Bands, Moving Averages, VWAP)
+- **Machine Learning**: Ensemble models (Random Forest, Gradient Boosting, Logistic Regression)
+- **Risk Management**: Volatility-adjusted position sizing, stop-loss, take-profit, drawdown controls
+- **Performance Analytics**: Sharpe ratio, maximum drawdown, win rate tracking
+- **Automated Pipeline**: Data ingestion, feature engineering, backtesting, and reporting
 
 ## 🔬 Technical Indicators
 
 ### Momentum Indicators
-- **RSI** (Relative Strength Index)
-- **Stochastic Oscillator** (K% and D%)
-- **CCI** (Commodity Channel Index)
-- **ROC** (Rate of Change - 10d, 20d)
+- **RSI** (Relative Strength Index) - Overbought/oversold conditions
+- **MACD** (Moving Average Convergence Divergence) - Trend momentum
 
 ### Trend Analysis
-- **ADX** (Average Directional Index) for trend strength
-- **EMA/SMA Crossovers** (12, 26, 20, 50 periods)
-- **Hull Moving Average** for reduced lag
-- **Trend confirmation** with directional filters
+- **SMA** (Simple Moving Averages) - 20 and 50 period
+- **EMA** (Exponential Moving Averages) - 12 and 26 period
+- **Moving Average Crossovers** for trend identification
 
 ### Volatility Measures
-- **ATR** (Average True Range)
-- **Bollinger Bands** with dynamic width
-- **Donchian Channels** (20-period)
+- **ATR** (Average True Range) - Volatility measurement
+- **Bollinger Bands** - Dynamic support/resistance levels
 - **Volatility-adjusted position sizing**
 
-### Volume/Flow Analysis
-- **VWAP** (Volume Weighted Average Price)
-- **OBV** (On-Balance Volume)
-- **CMF** (Chaikin Money Flow)
-- **Price-Volume Trend** analysis
-
-### Statistical/Mean Reversion
-- **Z-Score** analysis (20-period)
-- **Price Z-Score** for mean reversion signals
-- **Volume Z-Score** for anomaly detection
-- **Return Z-Score** for momentum analysis
+### Volume Analysis
+- **VWAP** (Volume Weighted Average Price) - Institutional benchmark
+- **OBV** (On-Balance Volume) - Volume momentum
+- **Volume Ratio** - Relative volume analysis
 
 ## 🚀 Quick Start
 
@@ -63,14 +52,13 @@ python main.py
 
 ## 📊 Strategy Logic
 
-### Advanced Signal Generation
+### Signal Generation
 ```python
 # Multi-factor long signal
 long_signal = (
-    (RSI < 30 | BB_oversold | Z_Score < -2) &    # Mean reversion
-    (SMA20 > SMA50 & ADX > 25) &                 # Trend confirmation
-    (Stoch_K < 20 | CCI < -100) &                # Momentum confirmation
-    (Close > VWAP)                               # Volume support
+    (RSI < 30 | Close < BB_Lower) &    # Mean reversion
+    (SMA20 > SMA50) &                  # Trend confirmation
+    (Close > VWAP)                     # Volume support
 )
 ```
 
@@ -82,10 +70,10 @@ long_signal = (
 - **Diversification**: 20% maximum per position
 
 ### Machine Learning Pipeline
-- **Feature Engineering**: 25+ quantitative features
+- **Feature Engineering**: 18 quantitative features (RSI, MACD, Bollinger Bands, Moving Averages, ATR, VWAP, OBV)
 - **Model Ensemble**: Random Forest + Gradient Boosting + Logistic Regression
-- **Validation**: Time series cross-validation
-- **Feature Selection**: Statistical significance testing
+- **Validation**: Time series cross-validation (TimeSeriesSplit)
+- **Feature Selection**: ANOVA F-test for top 15 features
 
 ## 📈 Performance Metrics
 
