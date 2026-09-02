@@ -140,7 +140,7 @@ RISK_CONFIG = {
 }
 ```
 
-## 📊 Advanced Analytics
+## Advanced Analytics
 
 The system provides institutional-grade performance analysis:
 
