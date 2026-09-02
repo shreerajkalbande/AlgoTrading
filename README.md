@@ -1,11 +1,11 @@
-# 📈 Advanced Quantitative Trading System
+# Advanced Quantitative Trading System
 
 A professional algorithmic trading system implementing multi-factor strategies with advanced technical indicators, machine learning, and institutional-grade risk management.
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## 🎯 Advanced Features
+## Advanced Features
 
 - **Multi-Factor Strategy**: Core technical indicators (RSI, MACD, Bollinger Bands, Moving Averages, VWAP)
 - **Machine Learning**: Ensemble models (Random Forest, Gradient Boosting, Logistic Regression)
@@ -13,7 +13,7 @@ A professional algorithmic trading system implementing multi-factor strategies w
 - **Performance Analytics**: Sharpe ratio, maximum drawdown, win rate tracking
 - **Automated Pipeline**: Data ingestion, feature engineering, backtesting, and reporting
 
-## 🔬 Technical Indicators
+## Technical Indicators
 
 ### Momentum Indicators
 - **RSI** (Relative Strength Index) - Overbought/oversold conditions
@@ -34,7 +34,7 @@ A professional algorithmic trading system implementing multi-factor strategies w
 - **OBV** (On-Balance Volume) - Volume momentum
 - **Volume Ratio** - Relative volume analysis
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Clone repository
@@ -50,7 +50,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## 📊 Strategy Logic
+## Strategy Logic
 
 ### Signal Generation
 ```python
@@ -75,7 +75,7 @@ long_signal = (
 - **Validation**: Time series cross-validation (TimeSeriesSplit)
 - **Feature Selection**: ANOVA F-test for top 15 features
 
-## 📈 Performance Metrics
+## Performance Metrics
 
 | Metric | Target | Description |
 |--------|--------|-------------|
@@ -85,7 +85,7 @@ long_signal = (
 | Win Rate | > 58% | Profitable trades % |
 | Profit Factor | > 1.8 | Gross profit/loss ratio |
 
-## 🛠️ Usage Examples
+## Usage Examples
 
 ### Complete System
 ```bash
@@ -114,7 +114,7 @@ print(f"Sharpe Ratio: {performance['sharpe_ratio']:.3f}")
 print(f"Max Drawdown: {performance['max_drawdown']:.2%}")
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Strategy Parameters
 ```python
@@ -150,7 +150,7 @@ The system provides institutional-grade performance analysis:
 - **Correlation Analysis**: Cross-asset relationships
 - **Drawdown Analysis**: Duration and recovery metrics
 
-## 📋 Requirements
+## Requirements
 
 ```
 numpy>=1.24.0
@@ -162,7 +162,7 @@ matplotlib>=3.7.0
 seaborn>=0.12.0
 ```
 
-## ⚠️ Risk Disclaimer
+## Risk Disclaimer
 
 This system is designed for educational and research purposes. Financial markets involve substantial risk of loss. Always:
 
@@ -172,7 +172,7 @@ This system is designed for educational and research purposes. Financial markets
 - **Understand** all strategies before implementation
 - **Comply** with local financial regulations
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions to enhance the system:
 
@@ -181,7 +181,7 @@ We welcome contributions to enhance the system:
 3. Implement with proper testing
 4. Submit pull request with detailed description
 
-## 📄 License
+## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
